@@ -1,0 +1,59 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '3.5.0'
+	id 'io.spring.dependency-management' version '1.1.7'
+	id 'com.github.node-gradle.node' version '7.0.2'
+
+}
+
+group = 'dev.lobzter'
+version = '0.0.1-SNAPSHOT'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(21)
+	}
+}
+
+node {
+	version = '20.11.1' // specify desired Node.js version
+	npmVersion = '10.2.4' // or another compatible npm version
+	download = true       // downloads Node/npm locally, avoids system dependency
+	workDir = file("${project.buildDir}/nodejs")
+	npmWorkDir = file("${project.buildDir}/npm")
+}
+
+
+repositories {
+	mavenCentral()
+}
+
+def frontendDir = "$projectDir/src/main/frontend"
+
+tasks.named('npmInstall') {
+	workingDir = file(frontendDir)
+}
+
+
+tasks.register('buildFrontend', com.github.gradle.node.npm.task.NpmTask) {
+	dependsOn 'npmInstall'
+	workingDir = file(frontendDir)
+	args = ['run', 'build']
+}
+tasks.named('processResources') {
+	dependsOn 'buildFrontend'
+}
+
+
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	developmentOnly 'org.springframework.boot:spring-boot-devtools'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+}
